@@ -1,14 +1,31 @@
 import pandas as pd
+import pytz
+from datetime import datetime
 
 def export_to_csv(fundings, filename='bitso_deposits.csv'):
     data = []
+
+    # Define the timezone
+    mexico_tz = pytz.timezone('America/Mexico_City')
+
     for f in fundings:
         details = f.get('details', {})
         legal = f.get('legal_operation_entity', {})
+        utc_dt_str = f.get('created_at')
+
+        # Convert UTC to Mexico time
+        try:
+            utc_dt = datetime.strptime(utc_dt_str, "%Y-%m-%dT%H:%M:%S+00:00").replace(tzinfo=pytz.UTC)
+            local_dt = utc_dt.astimezone(mexico_tz)
+            local_dt_str = local_dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            local_dt_str = ''  # Fallback in case of format issue
+
         data.append({
             'Funding ID': f.get('fid'),
             'Status': f.get('status'),
-            'Date': f.get('created_at'),
+            'Date (UTC)': utc_dt_str,
+            'Date (Mexico City)': local_dt_str,
             'Amount': f.get('amount'),
             'Currency': f.get('currency'),
             'Asset': f.get('asset'),
