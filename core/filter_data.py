@@ -7,7 +7,7 @@ def filter_fundings_this_month(fundings):
     today_local = datetime.now(mexico_tz).date()
 
     start_date = date(today_local.year, today_local.month, 1)
-    end_date = today_local #- pd.Timedelta(days=1)  # aqui se comenta para el dia anterior
+    end_date = today_local# - pd.Timedelta(days=1)  # aqui se comenta para el dia anterior
 
     print(f"Filtering fundings from {start_date} to {end_date} (Mexico City time)")
 

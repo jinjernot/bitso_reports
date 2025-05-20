@@ -26,14 +26,19 @@ def filter_sender_name(fundings, filename='bitso_sum_by_sender_name.csv'):
     summary = (
         df.groupby('Sender Name', as_index=False)
         .sum(numeric_only=True)
-        .sort_values(by='Amount', ascending=False)
     )
 
-    total_amount = summary['Amount'].sum()
+    # Sort alphabetically
+    summary = summary.sort_values(by='Sender Name')
 
+    # Compute total
+    total_amount = summary['Amount'].sum()
     total_row = pd.DataFrame([{'Sender Name': 'Total', 'Amount': total_amount}])
+
+    # Append total at the end
     summary = pd.concat([summary, total_row], ignore_index=True)
 
+    # Format Amounts
     summary['Amount'] = summary['Amount'].apply(lambda x: f"${x:,.2f}")
 
     summary.to_csv(filename, index=False)
