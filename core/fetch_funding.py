@@ -1,8 +1,10 @@
-
+import time
+import requests
+from requests.exceptions import RequestException, ConnectionError
+from http.client import RemoteDisconnected
+from urllib3.exceptions import ProtocolError
 
 from auth import generate_auth_headers_for_user
-
-import requests
 import config
 
 def save_raw_response(data, filename='bitso_raw_fundings.json'):
@@ -11,7 +13,7 @@ def save_raw_response(data, filename='bitso_raw_fundings.json'):
     # print(f"Raw API response saved to {filename}")
     pass
 
-def fetch_funding_transactions_for_user(user, api_key, api_secret):
+def fetch_funding_transactions_for_user(user, api_key, api_secret, max_retries=5, backoff_factor=1.5):
     endpoint = '/v3/fundings'
     url = config.BASE_URL + endpoint
 
@@ -27,13 +29,33 @@ def fetch_funding_transactions_for_user(user, api_key, api_secret):
         else:
             print(f"Fetching page {page_number} for {user}")
 
-        headers = generate_auth_headers_for_user(endpoint, method='GET', query_params=params,
-                                                 api_key=api_key, api_secret=api_secret)
+        retries = 0
+        while retries < max_retries:
+            try:
+                headers = generate_auth_headers_for_user(
+                    endpoint, method='GET', query_params=params,
+                    api_key=api_key, api_secret=api_secret
+                )
+                response = requests.get(url, headers=headers, params=params, timeout=10)
 
-        response = requests.get(url, headers=headers, params=params)
+                if response.status_code == 200:
+                    break  # Success
+                else:
+                    print(f"Non-200 status code: {response.status_code} - {response.text}")
+                    raise RequestException(f"Non-200 response: {response.status_code}")
 
-        if response.status_code != 200:
-            raise Exception(f"Error fetching funding transactions for {user}: {response.text}")
+            except (ConnectionError, RemoteDisconnected, ProtocolError) as conn_err:
+                print(f"Connection error: {conn_err}. Retrying...")
+
+            except RequestException as req_err:
+                print(f"Request error: {req_err}. Retrying...")
+
+            retries += 1
+            sleep_time = backoff_factor ** retries
+            print(f"Retry {retries}/{max_retries} - sleeping {sleep_time:.1f} seconds...")
+            time.sleep(sleep_time)
+        else:
+            raise Exception(f"Failed to fetch data after {max_retries} retries for user {user}")
 
         result = response.json()
         fundings = result.get('payload', [])
