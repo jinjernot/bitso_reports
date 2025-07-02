@@ -7,13 +7,8 @@ def filter_fundings_this_month(fundings):
     mexico_tz = pytz.timezone('America/Mexico_City')
     today_local = datetime.now(mexico_tz).date()
 
-    if today_local.day == 1:
-        prev_month = today_local.replace(day=1) - pd.Timedelta(days=1)
-        start_date = date(prev_month.year, prev_month.month, 1)
-        end_date = prev_month
-    else:
-        start_date = date(today_local.year, today_local.month, 1)
-        end_date = today_local - pd.Timedelta(days=1)
+    start_date = date(today_local.year, today_local.month, 1)
+    end_date = today_local
 
     print(f"Filtering fundings from {start_date} to {end_date} (Mexico City time)")
 
@@ -25,7 +20,6 @@ def filter_fundings_this_month(fundings):
 
         try:
             created_local = parser.isoparse(created_str).astimezone(mexico_tz).date()
-            #print(f"{created_str} → Local Date: {created_local}")
             if start_date <= created_local <= end_date:
                 filtered.append(f)
         except Exception as e:
