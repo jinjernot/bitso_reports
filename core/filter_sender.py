@@ -4,6 +4,10 @@ import config
 def filter_sender_name(fundings, filename='bitso_sum_by_sender_name.csv'):
     data = []
     for f in fundings:
+        # Exclude fundings with a status of 'failed'
+        if f.get('status') == 'failed':
+            continue
+
         details = f.get('details', {}) or {}
         clabe = details.get('sender_clabe')
         amount_str = f.get('amount', 0)
