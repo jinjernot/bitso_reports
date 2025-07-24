@@ -28,23 +28,23 @@ def process_user_funding(user: str, api_key: str, api_secret: str) -> tuple[list
 
 def generate_growth_chart(all_fundings: list, filename: str = 'bitso_this_month_income.png'):
     """
-    Generates and saves a line chart of daily income for the current month.
+    Generates and saves a bar chart of daily income for the current month.
 
     Args:
         all_fundings (list): A list of all funding transaction dictionaries.
         filename (str): The name of the file to save the chart to.
     """
-    print(f"\nGenerating daily income chart for this month...")
+    print(f"\nGenerating daily income bar chart for this month...")
 
     if not all_fundings:
-        print("No funding data available to generate a chart.")
+        print("No funding data available to generate a bar chart.")
         return
 
     # Filter for successful/completed transactions only
     successful_fundings = [f for f in all_fundings if f.get('status') == 'complete']
 
     if not successful_fundings:
-        print("No successful funding data found to generate a chart.")
+        print("No successful funding data found to generate a bar chart.")
         return
 
     df = pd.DataFrame(successful_fundings)
@@ -59,29 +59,30 @@ def generate_growth_chart(all_fundings: list, filename: str = 'bitso_this_month_
                        (df['created_at'].dt.month == now.month)]
 
     if this_month_df.empty:
-        print("No income data found for the current month. Chart not generated.")
+        print("No income data found for the current month. Bar chart not generated.")
         return
 
     # Group by day and sum the amounts.
     this_month_df.set_index('created_at', inplace=True)
     daily_income = this_month_df['amount'].resample('D').sum()
 
-    # Create and style the line chart
+    # Create and style the bar chart
     plt.figure(figsize=(12, 7))
-    daily_income.plot(kind='line', marker='o', linestyle='-', color='dodgerblue')
+    daily_income.plot(kind='bar', color='skyblue', edgecolor='black')
 
     # Improve formatting
-    plt.title(f'Daily Income for {now.strftime("%B %Y")}', fontsize=16, fontweight='bold')
-    plt.xlabel('Day of the Month', fontsize=12)
-    plt.ylabel('Total Funding Amount', fontsize=12)
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.title(f'Feria lavada: {now.strftime("%B %Y")}', fontsize=16, fontweight='bold')
+    plt.xlabel('Dia del mes', fontsize=12)
+    plt.ylabel('Dinero para la pension', fontsize=12)
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
     # Format x-axis to show only the day number
     plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%d'))
+    plt.xticks(rotation=0)
     plt.tight_layout()
 
     # Save the chart to a file
     plt.savefig(filename)
-    print(f"Success! Daily income chart saved to {filename}")
+    print(f"Success! Daily income bar chart saved to {filename}")
     plt.close()
 
 
