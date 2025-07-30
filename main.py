@@ -1,6 +1,7 @@
 from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
+import pytz
 
 from core.fetch_funding import fetch_funding_transactions_for_user
 from core.filter_data import filter_fundings_this_month
@@ -53,8 +54,12 @@ def generate_growth_chart(all_fundings: list, filename: str = 'bitso_this_month_
     df['created_at'] = pd.to_datetime(df['created_at'])
     df['amount'] = pd.to_numeric(df['amount'])
 
-    # Filter for transactions in the current month
-    now = datetime.now()
+    # Define and convert to Mexico City timezone
+    mexico_tz = pytz.timezone('America/Mexico_City')
+    df['created_at'] = df['created_at'].dt.tz_convert(mexico_tz)
+
+    # Filter for transactions in the current month using Mexico City time
+    now = datetime.now(mexico_tz)
     this_month_df = df[(df['created_at'].dt.year == now.year) &
                        (df['created_at'].dt.month == now.month)]
 
